@@ -1,0 +1,88 @@
+#!/bin/bash/
+#Organizar os ficheiros de um directorio com base em nº de palavras:
+
+#Perguntar ao utilizador qual o directorio:
+read -p "Digite o directorio destino: " diretorio
+
+#Veriricar se o directorio existe:
+if [ -d "$diretorio" ]; then
+    echo "Diretório existe."
+    cd "$diretorio"
+else echo "O directorio não existe"
+    exist 1
+fi
+
+# Listar todos os ficheiros e diretórios no diretório atual
+#echo "Conteudo do directorio"
+ls -la >lista_arquivos.txt
+
+
+#Verificar se existe diretorio de backup, se não existir então cria:
+if [ ! -d "backup_$(date +'%Y.%m.%d')" ]; then
+mkdir "backup_$(date +'%Y.%m.%d')"
+fi 
+
+#Copiar todos os ficheiros para a diretorio de backup:
+for file in *.txt; do
+    if [ -f "$file" ]; then
+    backup=backup_$(date +'%Y.%m.%d')
+    cp "$file" $backup
+fi
+done
+
+
+
+#Relatório para o utilizador:
+echo "Relatório"
+    #Saber quantos ficheiros contem o directorio
+num_file=$(find "$diretorio" -type f | wc -l)
+echo "O diretorio contem $num_file ficheiros."
+echo "Os ficheiros foram copiados para o diretorio $backup"
+
+    #Ordenar os ficheiros do maior para o menos:
+echo "Ficheiros têm a seguinte ordenação por tamanho:"
+ls -S
+
+    #Saber o tamanho de cada um dos ficheiros:
+echo "Tamanho individual de cada ficheiro:"
+for file in "$diretorio"/*; do
+    if [ -f "$file" ]; then
+        size=$(wc -c<"$file")
+        if [ "$size" -lt 1000 ]; then
+        echo "O ficheiro $file contém $size bytes - Ficheiro Pequeno"
+        elif [ "$size" -gt 1000 ] && [ "$size" -lt 10000 ]; then
+        echo "O ficheiro $file contém $size bytes - Ficheiro Médio"
+        else
+            echo "O ficheiro $file  contém $size bytes - Ficheiro Grande"
+        fi
+    fi
+done
+
+    #Saber o tamanho de todos os ficheiros:
+for file in "$diretorio"/*; do
+    if [ -f "$file" ]; then
+    file_size=$(stat -c %s "$file")
+    total_size=$((total_size+file_size))
+    fi
+done
+echo "O diretorio contem $total_size bytes."
+
+    #Tamanho médio dos ficheiros:
+media=$((total_size / num_file))
+echo "A média dos ficheiros é de $media bytes"
+
+#Previsão do Tempo
+#pedir ao utilizador o nome de uma cidade:
+echo "Vamos ver qual o estado do tempo na tua cidade?"
+echo "Digite o nome da cidade: "
+read cidade
+
+#ir a um API publico sacar a info
+curl "https://api.openweathermap.org/data/2.5/weather?q={$cidade}&APPID=37d7325ebfc3b5514211916cd78cb309" 
+
+#guardar num ficheiro com nomecidade_data
+file="${cidade}_$(date +'%y%m%d').txt"
+curl "https://api.openweathermap.org/data/2.5/weather?q={$cidade}&APPID=37d7325ebfc3b5514211916cd78cb309" >> "$file"
+echo "Ficheiro guardado com o nome $file."
+
+echo "A sessão chegou ao fim, até à próxima"
